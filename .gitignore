@@ -1,0 +1,14 @@
+tags
+*.json
+test*.py
+trash
+.DS_Store
+.idea/
+.venv/
+*.ldb
+*.zip
+!.gitkeep
+test.txt
+nodeX_*
+clientX_*
+__pycache__/
