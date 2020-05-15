@@ -1,3 +1,6 @@
+ベーシックな機能を持つ独自ブロックチェーン[bc2odpt-base](https://github.com/hyo07/bc2odpt-base)に新規実装を行うためのリポジトリ  
+
+
 # 環境
 - python: 3.7.3
 - モジュール: requirements.txt 参照
