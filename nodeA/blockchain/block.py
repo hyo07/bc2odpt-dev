@@ -9,7 +9,7 @@ from setting import *
 
 
 class Block:
-    def __init__(self, transactions, previous_block_hash, block_num, address, sc_self=None):
+    def __init__(self, transactions, previous_block_hash, block_num, address, hash_txs, sc_self=None):
         """
         Args:
             transaction: ブロック内にセットされるトランザクション
@@ -24,6 +24,8 @@ class Block:
         self.address = address
         self.sc_self = sc_self
         self.lose_flag = False
+        self.include_hashs = self._included_hash_txs(hash_txs)
+        self.total_clients = self._sum_all_client(self.include_hashs)
 
         current = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         if DEBUG:
@@ -47,6 +49,8 @@ class Block:
             'previous_block': self.previous_block,
             'address': self.address,
             'difficulty': DIFFICULTY,
+            'addrs': json.dumps(self.include_hashs),
+            'total_majority': self.total_clients,
         }
 
         if self.transactions:
@@ -120,6 +124,23 @@ class Block:
 
         return tx_list[0]
 
+    def _included_hash_txs(self, hash_txs: dict):
+        if not hash_txs:
+            return {}
+        have_hash_txs = dict()
+        for tx in self.transactions:
+            hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
+            have_hash_txs[hash_tx] = list(hash_txs[hash_tx])
+        return have_hash_txs
+
+    def _sum_all_client(self, hashs: dict):
+        if not hashs:
+            return 0
+        total = 0
+        for addrs in hashs.values():
+            total += len(addrs)
+        return total
+
 
 class GenesisBlock(Block):
     """
@@ -129,7 +150,7 @@ class GenesisBlock(Block):
 
     def __init__(self):
         super().__init__(transactions='AD9B477B42B22CDF18B1335603D07378ACE83561D8398FBFC8DE94196C65D806',
-                         previous_block_hash=None, block_num="0", address=None)
+                         previous_block_hash=None, block_num="0", address=None, hash_txs={})
 
     def to_dict(self, include_nonce=True):
         d = {

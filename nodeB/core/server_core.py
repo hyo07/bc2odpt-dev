@@ -145,11 +145,10 @@ class ServerCore(object):
 
         # while self.flag_stop_block_build is not True:
         if self.flag_stop_block_build is not True:
-            # result = self.tp.get_stored_transactions()
             new_tp = self.tp.get_stored_transactions2()
             if DEBUG:
                 print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
-                print("transactions", self.tp.get_stored_transactions())
+                print("transactions", self.tp.get_stored_transactions2())
                 print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
 
             # if not result:
@@ -172,7 +171,8 @@ class ServerCore(object):
             #     break
 
             block_num = level_param.get_block_num(PARAM_P) + len(self.bm.chain)
-            new_block = self.bb.generate_new_block(new_tp, self.prev_block_hash, str(block_num), ADDRESS, self)
+            new_block = self.bb.generate_new_block(new_tp, self.prev_block_hash, str(block_num), ADDRESS,
+                                                   self.tp.get_txs_hash(), self)
 
             new_block_dic = new_block.to_dict()
 
@@ -274,7 +274,7 @@ class ServerCore(object):
 
                     # self.save_block_2_db()
 
-                    # self.flag_stop_block_build = False  # TODO 試しで追加
+                    # self.flag_stop_block_build = False
 
                 else:
                     # ブロックとして不正ではないがVerifyにコケる場合は自分がorphanブロックを生成している

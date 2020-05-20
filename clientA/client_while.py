@@ -31,14 +31,23 @@ def main():
     transactions = []
     count = 1
     while True:
-        value = randint(1, 100)
-        # value = count
+        # value = randint(1, 100)
+        value = count
         transactions.append({
             'sender': 's{}'.format(str(count)),
             'recipient': 'r{}'.format(str(count)),
             'value': value,
             'client_address': ADDRESS,
         })
+
+        if count % randint(1, 4) == 0:
+            transactions[-1] = {
+                'sender': f"s{count - 1}",
+                'recipient': f"r{count - 1}",
+                'value': count - 1,
+                'client_address': "clientB",
+            }
+
         if count % 10 == 0:
             my_p2p_client.send_message_to_my_core_node(MSG_NEW_TRANSACTION, json.dumps(transactions))
             transactions = []

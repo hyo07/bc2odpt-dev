@@ -167,8 +167,7 @@ class BlockchainManager:
 
             # if b in chain:
             #     pool_4_orphan_blocks.remove(b)
-            # TODO これじゃダメなのかな？上の部分
-
+            
             result = self.renew_my_blockchain(chain)
             # result = self.renew_my_blockchain2(chain, new_chain_len - mychain_len)
             if DEBUG:
