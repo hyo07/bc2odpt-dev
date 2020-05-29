@@ -4,6 +4,7 @@ import hashlib
 import binascii
 from datetime import datetime
 import random
+from copy import deepcopy
 
 from setting import *
 
@@ -15,17 +16,18 @@ class Block:
             transaction: ブロック内にセットされるトランザクション
             previous_block_hash: 直前のブロックのハッシュ値
         """
-        snap_tr = json.dumps(transactions)  # PoW計算中に値が変わるのでブロック計算開始時の値を退避させておく
 
         self.timestamp = time()
-        self.transactions = json.loads(snap_tr)
+        self.transactions = deepcopy(transactions)
         self.previous_block = previous_block_hash
         self.b_num = block_num
         self.address = address
         self.sc_self = sc_self
         self.lose_flag = False
+        self.max_addrs = 0
         self.include_hashs = self._included_hash_txs(hash_txs)
-        self.total_clients = self._sum_all_client(self.include_hashs)
+        self.over_half = int(self.max_addrs / 2 + 1)
+        self.total_clients = self._sum_all_client(self.include_hashs, self.over_half)
 
         current = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         if DEBUG:
@@ -51,6 +53,7 @@ class Block:
             'difficulty': DIFFICULTY,
             'addrs': json.dumps(self.include_hashs),
             'total_majority': self.total_clients,
+            "over_half": self.over_half,
         }
 
         if self.transactions:
@@ -63,7 +66,7 @@ class Block:
 
         if include_nonce:
             d['nonce'] = self.nonce
-            d["transactions"] = json.dumps(self.transactions)
+            d["transactions"] = json.dumps(list(self.transactions.values()))
 
         return d
 
@@ -83,8 +86,8 @@ class Block:
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
             if digest.endswith(suffix):
                 return nonce
-            # i += 1
-            i += random.randint(1, 10)
+            i += 1
+            # i += random.randint(1, 10)
 
     def _get_double_sha256(self, message):
         return hashlib.sha256(hashlib.sha256(message).digest()).digest()
@@ -117,17 +120,39 @@ class Block:
         if not hash_txs:
             return {}
         have_hash_txs = dict()
-        for tx in self.transactions:
-            hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
-            have_hash_txs[hash_tx] = list(hash_txs[hash_tx])
+        # for tx in self.transactions:
+        #     hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
+        #     have_hash_txs[hash_tx] = list(hash_txs[hash_tx])
+
+        tx_keys = self.transactions.keys()
+        for tx_hash in tx_keys:
+            # TODO 此処でなぜかKey Error出てしまう。根本的な原因不明。とりあえずやりたくないけどtryでスルーする
+            try:
+                client_addrs = list(hash_txs[tx_hash])
+                if self.max_addrs < len(client_addrs):
+                    self.max_addrs = len(client_addrs)
+                have_hash_txs[tx_hash] = client_addrs
+            except KeyError:
+                pass
         return have_hash_txs
 
-    def _sum_all_client(self, hashs: dict):
+    def _sum_all_client(self, hashs: dict, n: int):
         if not hashs:
             return 0
         total = 0
-        for addrs in hashs.values():
-            total += len(addrs)
+        del_list = list()
+        for k, addrs in hashs.items():
+            if len(addrs) < n:
+                del_list.append(k)
+            else:
+                total += len(addrs)
+
+        for del_hash in del_list:
+            try:
+                del self.transactions[del_hash]
+                del self.include_hashs[del_hash]
+            except KeyError:
+                pass
         return total
 
 

@@ -17,7 +17,7 @@ class TransactionPool:
     # tx poolに新規追加, txハッシュリストにも追加
     def check_duplicates_and_set_tx(self, transaction: list):
         with self.lock:
-            flag = False
+            # flag = False
             for tx in transaction:
                 # hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
                 cl_addr = tx.get("client_address")
@@ -30,20 +30,21 @@ class TransactionPool:
                     self.hash_txs[hash_tx] = set()
 
                     self.transactions[hash_tx] = tx
-                    flag = True
+                    # flag = True
 
                 # TODO
                 # ハッシュtxセットに追加
                 self.hash_txs[hash_tx].add(cl_addr)
 
-        return flag
+        # return flag
 
     # tx poolから削除
-    def clear_my_transactions2(self, txs: list):
+    def clear_my_transactions2(self, txs: dict):
         with self.lock:
-            for tx in txs:
-                # hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
-                hash_tx = self._hash_tx(tx)
+            for tx in list(txs.keys()):
+                # # hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
+                # hash_tx = self._hash_tx(tx)
+                hash_tx = tx
                 try:
                     del self.transactions[hash_tx]
                 except KeyError:
@@ -69,6 +70,9 @@ class TransactionPool:
     # tx pool取得
     def get_stored_transactions2(self):
         return list(self.transactions.values())
+
+    def get_stored_transactions3(self):
+        return self.transactions
 
     # txハッシュリスト取得
     def get_txs_hash_len(self):

@@ -17,12 +17,12 @@ def call_api():
     for re in resp_j:
         delay = re.get("odpt:delay")
         if (delay != 0) and delay:
-        # if not delay:
-        #     pass
-        # elif (delay >= 300) and delay:
+            # if not delay:
+            #     pass
+            # elif (delay >= 300) and delay:
             buses.append(
                 {
-                    "date": re.get("dc:date"),
+                    "date": conv_dt(re.get("dc:date")),
                     "sameAs": re.get("owl:sameAs"),
                     "railDirection": re.get("odpt:railDirection"),
                     # 以下、存在しない場合あり
@@ -36,6 +36,11 @@ def call_api():
             )
 
     return json.dumps(buses)
+
+
+def conv_dt(dt):
+    re_dt = dt[:-11] + "00:00"
+    return re_dt
 
 
 if __name__ == "__main__":

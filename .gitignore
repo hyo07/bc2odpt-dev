@@ -13,3 +13,4 @@ nodeX_*
 clientX_*
 __pycache__/
 *ignore*
+*.log

@@ -153,6 +153,38 @@ def comparison_ldbs(p1, p2, border=10):
     return count
 
 
+# -----------------------------------------------------------------------------------------
+def read_ones_db(p):
+    # p = "../db/2/ldb/"
+    # p = "../db/1/ldb/"
+    db_list = list(glob(p + "block*.ldb"))
+    total_tx = 0
+    total_addr = 0
+    clientA = 0
+    clientB = 0
+    clientC = 0
+    for db_name in sorted(db_list):
+        db = plyvel.DB(str(db_name), create_if_missing=False)
+        for k, v in db:
+            # key = k.decode()
+            val = json.loads(v.decode())
+            total_tx += val.get("nTx", 0)
+            total_addr += val.get("total_majority", 0)
+            addr = val.get("addrs", None)
+            if addr:
+                addr_j = json.loads(addr)
+                for in_addr in addr_j.values():
+                    if "clientA" in in_addr:
+                        clientA += 1
+                    if "clientB" in in_addr:
+                        clientB += 1
+                    if "clientC" in in_addr:
+                        clientC += 1
+        db.close()
+    # print(re_s)
+    return {"total_tx": total_tx, "total_addr": total_addr, "clientA": clientA, "clientB": clientB, "clientC": clientC}
+
+
 if __name__ == "__main__":
     pass
     P1 = "/Users/yutaka/python/research/BC2ODPT/nodeA/db/ldb/"
@@ -180,8 +212,8 @@ if __name__ == "__main__":
     # J2 = json_db(P2)
     # print(J1 == J2)
 
-    print(comparison_ldbs(P1, P2, 20))
-    # print(comparison_ldbs(P1, P3, 5))
+    print(comparison_ldbs(P1, P2, 10))
+    print(comparison_ldbs(P1, P3, 10))
     # print(comparison_ldbs(P1, P4, 20))
 
     # a = []
@@ -190,8 +222,10 @@ if __name__ == "__main__":
     #         tx = json.loads(read_bc[i]["transactions"])
     #         tx_count = len(tx)
     #     except json.decoder.JSONDecodeError:
-    #         tx_count = 0
+    #         tx_count =
     #     ts = read_bc[i + 1]["timestamp"] - read_bc[i]["timestamp"]
     #     a.append(ts)
     #     print(ts)
     # print("平均:", sum(a)/len(a))
+
+    print(read_ones_db(P1))
