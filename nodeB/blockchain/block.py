@@ -27,6 +27,8 @@ class Block:
         self.max_addrs = 0
         self.include_hashs = self._included_hash_txs(hash_txs)
         self.over_half = int(self.max_addrs / 2 + 1)
+        if self.over_half < 2:
+            self.over_half = 2
         self.total_clients = self._sum_all_client(self.include_hashs, self.over_half)
 
         current = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
