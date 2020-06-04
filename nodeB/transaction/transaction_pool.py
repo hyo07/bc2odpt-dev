@@ -27,14 +27,16 @@ class TransactionPool:
 
                     # TODO
                     # setへの追加 -> dictへの追加 に変更
-                    self.hash_txs[hash_tx] = set()
+                    # self.hash_txs[hash_tx] = set()
+                    self.hash_txs[hash_tx] = {"addrs": set(), "count": 0}
 
                     self.transactions[hash_tx] = tx
                     # flag = True
 
                 # TODO
                 # ハッシュtxセットに追加
-                self.hash_txs[hash_tx].add(cl_addr)
+                # self.hash_txs[hash_tx].add(cl_addr)
+                self.hash_txs[hash_tx]["addrs"].add(cl_addr)
 
         # return flag
 
@@ -104,10 +106,17 @@ class TransactionPool:
 
                             # TODO
                             # setへの追加 -> dictへの追加 に変更
-                            self.hash_txs[hash_tx] = set()
+                            # self.hash_txs[hash_tx] = set()
+                            self.hash_txs[hash_tx] = {"addrs": set(), "count": 0}
                         # TODO
                         # ハッシュtxセットに追加
-                        self.hash_txs[hash_tx].add(cl_addr)
+                        self.hash_txs[hash_tx]["addrs"].add(cl_addr)
+
+    # スルーされた回数を進める
+    def add_through_count(self, exclusion_txs: list):
+        with self.lock:
+            for ex_tx in exclusion_txs:
+                self.hash_txs[ex_tx]["count"] += 1
 
     def _hash_tx(self, tx):
         # cl_addr = tx.pop("client_address")

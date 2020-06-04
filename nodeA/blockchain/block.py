@@ -24,6 +24,7 @@ class Block:
         self.address = address
         self.sc_self = sc_self
         self.lose_flag = False
+        self.exclusion_tx = []
         self.max_addrs = 0
         self.include_hashs = self._included_hash_txs(hash_txs)
         self.over_half = int(self.max_addrs / 2 + 1)
@@ -71,6 +72,9 @@ class Block:
             d["transactions"] = json.dumps(list(self.transactions.values()))
 
         return d
+
+    def get_exclusion_tx(self):
+        return self.exclusion_tx
 
     def _compute_nonce_for_pow(self, message, difficulty=DIFFICULTY):
         # difficultyの数字を増やせば増やすほど、末尾で揃えなければならない桁数が増える。
@@ -141,10 +145,12 @@ class Block:
         for tx_hash in tx_keys:
             # TODO 此処でなぜかKey Error出てしまう。根本的な原因不明。とりあえずやりたくないけどtryでスルーする
             try:
-                client_addrs = list(hash_txs[tx_hash])
+                client_addrs = list(hash_txs[tx_hash]["addrs"])
+                exclusion_count = hash_txs[tx_hash]["count"]
                 if self.max_addrs < len(client_addrs):
                     self.max_addrs = len(client_addrs)
-                have_hash_txs[tx_hash] = client_addrs
+                # have_hash_txs[tx_hash] = client_addrs
+                have_hash_txs[tx_hash] = {"addrs": client_addrs, "count": exclusion_count}
             except KeyError:
                 pass
         return have_hash_txs
@@ -154,11 +160,13 @@ class Block:
             return 0
         total = 0
         del_list = list()
-        for k, addrs in hashs.items():
-            if len(addrs) < n:
+        for k, v in hashs.items():
+            if len(v["addrs"]) < n:
                 del_list.append(k)
+                if v["count"] < THROUGH:
+                    self.exclusion_tx.append(k)
             else:
-                total += len(addrs)
+                total += len(v["addrs"])
 
         for del_hash in del_list:
             try:
@@ -166,6 +174,7 @@ class Block:
                 del self.include_hashs[del_hash]
             except KeyError:
                 pass
+
         return total
 
 

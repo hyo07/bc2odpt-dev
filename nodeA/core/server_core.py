@@ -242,6 +242,14 @@ class ServerCore(object):
 
                 # index = len(result)
                 # self.tp.clear_my_transactions(index)
+                # 排除対象になったtxを取り込み済みtxから除く
+                exclusion_txs = new_block.get_exclusion_tx()
+                for ex_tx in exclusion_txs:
+                    try:
+                        del new_tp[ex_tx]
+                    except KeyError:
+                        pass
+                self.tp.add_through_count(exclusion_txs)
                 self.tp.clear_my_transactions2(new_tp)
 
                 # break

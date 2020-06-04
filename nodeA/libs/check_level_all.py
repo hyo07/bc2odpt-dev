@@ -174,11 +174,11 @@ def read_ones_db(p):
             if addr:
                 addr_j = json.loads(addr)
                 for in_addr in addr_j.values():
-                    if "clientA" in in_addr:
+                    if "clientA" in in_addr["addrs"]:
                         clientA += 1
-                    if "clientB" in in_addr:
+                    if "clientB" in in_addr["addrs"]:
                         clientB += 1
-                    if "clientC" in in_addr:
+                    if "clientC" in in_addr["addrs"]:
                         clientC += 1
         db.close()
     # print(re_s)
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     # print(J1 == J2)
 
     print(comparison_ldbs(P1, P2, 10))
-    print(comparison_ldbs(P1, P3, 10))
+    # print(comparison_ldbs(P1, P3, 10))
     # print(comparison_ldbs(P1, P4, 20))
 
     # a = []
