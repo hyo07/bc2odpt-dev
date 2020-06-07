@@ -71,17 +71,23 @@ class TransactionPool:
 
     # tx pool取得
     def get_stored_transactions2(self):
-        return list(self.transactions.values())
+        with self.lock:
+            return list(self.transactions.values())
 
     def get_stored_transactions3(self):
-        return self.transactions
+        with self.lock:
+            # メモリアドレスを変更した値を返したい（参照渡ししたくない）
+            return dict(self.transactions)
 
     # txハッシュリスト取得
     def get_txs_hash_len(self):
-        return len(self.hash_txs)
+        with self.lock:
+            return len(self.hash_txs)
 
     def get_txs_hash(self):
-        return self.hash_txs
+        with self.lock:
+            # メモリアドレスを変更した値を返したい（参照渡ししたくない）
+            return dict(self.hash_txs)
 
     # 分岐解消時、上書きされたブロックに含まれるtxがまだpoolに残っていないか などの辻褄を合わせる
     def justification_conflict(self, blocks: list):

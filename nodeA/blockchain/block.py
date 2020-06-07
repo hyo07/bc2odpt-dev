@@ -18,7 +18,7 @@ class Block:
         """
 
         self.timestamp = time()
-        self.transactions = deepcopy(transactions)
+        self.transactions = transactions
         self.previous_block = previous_block_hash
         self.b_num = block_num
         self.address = address
