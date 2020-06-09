@@ -49,27 +49,27 @@ class Block:
         d = {
             'block_number': str(self.b_num),
             'timestamp': self.timestamp,
-            # "merkle_root": self._gene_merkle(json.dumps(self.transactions)),
             "nTx": len(self.transactions),
             'previous_block': self.previous_block,
             'address': self.address,
             'difficulty': DIFFICULTY,
-            'addrs': json.dumps(self.include_hashs),
+            # 'addrs': json.dumps(self.include_hashs),
             'total_majority': self.total_clients,
             "over_half": self.over_half,
         }
+
+        if self.lose_flag:
+            return {}
 
         if self.transactions:
             d["merkle_root"] = self._gene_merkle(json.dumps(self.transactions))
         else:
             d["merkle_root"] = ""
 
-        if self.lose_flag:
-            return {}
-
         if include_nonce:
             d['nonce'] = self.nonce
             d["transactions"] = json.dumps(list(self.transactions.values()))
+            d['addrs'] = json.dumps(self.include_hashs)
 
         return d
 

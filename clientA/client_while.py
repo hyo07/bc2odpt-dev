@@ -40,18 +40,18 @@ def main():
             'client_address': ADDRESS,
         })
 
-        if count % randint(2, 5) == 0:
-            transactions[-1] = {
-                'sender': f"送り人{count}",
-                'recipient': f"送られ{count}",
-                'value': count,
-                'client_address': "clientC",
-            }
+        # if count % randint(2, 5) == 0:
+        #     transactions[-1] = {
+        #         'sender': f"送り人{count}",
+        #         'recipient': f"送られ{count}",
+        #         'value': count,
+        #         'client_address': "clientC",
+        #     }
 
         if count % 10 == 0:
             my_p2p_client.send_message_to_my_core_node(MSG_NEW_TRANSACTION, json.dumps(transactions))
             transactions = []
-            sleep(30)
+            sleep(60)
             # count = 0
         else:
             sleep(1)

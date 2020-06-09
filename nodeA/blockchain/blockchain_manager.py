@@ -187,6 +187,7 @@ class BlockchainManager:
         nonce = block_4_pow['nonce']
         del block_4_pow['nonce']
         del block_4_pow['transactions']
+        del block_4_pow['addrs']
         if DEBUG:
             print(block_4_pow)
 
