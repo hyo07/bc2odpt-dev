@@ -37,6 +37,16 @@ class BlockchainManager:
             else:
                 return False
 
+    def replace_latest_block(self, block):
+        with self.lock:
+            if self.chain[-1]["total_majority"] < block["total_majority"] and int(
+                    self.chain[-1]["block_number"]) == int(block["block_number"]):
+                deleted_blcok = self.chain.pop(-1)
+                self.chain.append(block)
+                return deleted_blcok
+            else:
+                return None
+
     def renew_my_blockchain(self, blockchain):
         # ブロックチェーン自体を更新し、それによって変更されるはずの最新のprev_block_hashを計算して返却する
         with self.lock:
@@ -167,7 +177,7 @@ class BlockchainManager:
 
             # if b in chain:
             #     pool_4_orphan_blocks.remove(b)
-            
+
             result = self.renew_my_blockchain(chain)
             # result = self.renew_my_blockchain2(chain, new_chain_len - mychain_len)
             if DEBUG:
@@ -194,6 +204,42 @@ class BlockchainManager:
         message = json.dumps(block_4_pow, sort_keys=True)
         # print("message", message)
         nonce = str(nonce)
+
+        if block['previous_block'] != prev_block_hash:
+            if DEBUG:
+                print('Invalid block (bad previous_block)')
+                print(block['previous_block'])
+                print(prev_block_hash)
+            return False
+        else:
+            digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
+            if digest.endswith(suffix):
+                print('OK, this seems valid block')
+                return True
+            else:
+                if DEBUG:
+                    print('Invalid block (bad nonce)')
+                    print('nonce :', nonce)
+                    print('digest :', digest)
+                    print('suffix', suffix)
+                return False
+
+    def is_valid_block_booby(self, block, difficulty=DIFFICULTY):
+        # ブロック単体の正当性を検証する
+        suffix = '0' * difficulty
+        block_4_pow = copy.deepcopy(block)
+        nonce = block_4_pow['nonce']
+        del block_4_pow['nonce']
+        del block_4_pow['transactions']
+        del block_4_pow['addrs']
+        if DEBUG:
+            print(block_4_pow)
+
+        message = json.dumps(block_4_pow, sort_keys=True)
+        # print("message", message)
+        nonce = str(nonce)
+
+        prev_block_hash = self.get_hash(self.chain[-2])
 
         if block['previous_block'] != prev_block_hash:
             if DEBUG:

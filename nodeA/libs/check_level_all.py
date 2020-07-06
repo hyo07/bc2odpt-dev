@@ -130,8 +130,11 @@ def comparison_ldbs(p1, p2, border=10):
     ldb1_list = sorted(list(glob(p1 + "block*.ldb")))
     ldb2_list = sorted(list(glob(p2 + "block*.ldb")))
 
-    print("全ブロック長(nodeA):", str(len(ldb1_list) * border))
-    print("全ブロック長(nodeB):", str(len(ldb2_list) * border))
+    p1_name = p1.split("/")[-4]
+    p2_name = p2.split("/")[-4]
+
+    print(f"全ブロック長({p1_name[-1]}):", str(len(ldb1_list) * border))
+    print(f"全ブロック長({p2_name[-1]}):", str(len(ldb2_list) * border))
     count = 0
 
     for (ldb1_db, ldb2_db) in zip(ldb1_list, ldb2_list):
@@ -166,6 +169,8 @@ def read_ones_db(p):
     clientA = 0
     clientB = 0
     clientC = 0
+    clientD = 0
+    clientE = 0
     for db_name in sorted(db_list):
         db = plyvel.DB(str(db_name), create_if_missing=False)
         for k, v in db:
@@ -183,9 +188,14 @@ def read_ones_db(p):
                         clientB += 1
                     if "clientC" in in_addr["addrs"]:
                         clientC += 1
+                    if "clientD" in in_addr["addrs"]:
+                        clientD += 1
+                    if "clientE" in in_addr["addrs"]:
+                        clientE += 1
         db.close()
     # print(re_s)
-    return {"total_tx": total_tx, "total_addr": total_addr, "clientA": clientA, "clientB": clientB, "clientC": clientC}
+    return {"total_tx": total_tx, "total_addr": total_addr,
+            "clientA": clientA, "clientB": clientB, "clientC": clientC, "clientD": clientD, "clientE": clientE}
 
 
 if __name__ == "__main__":
@@ -194,10 +204,11 @@ if __name__ == "__main__":
     P2 = "/Users/yutaka/python/research/BC2ODPT/nodeB/db/ldb/"
     P3 = "/Users/yutaka/python/research/BC2ODPT/nodeX_3/db/ldb/"
     P4 = "/Users/yutaka/python/research/BC2ODPT/nodeX_4/db/ldb/"
+    P5 = "/Users/yutaka/python/research/BC2ODPT/nodeX_5/db/ldb/"
 
     read_bc = json_db(P1)
     print(read_bc)
-    # with open("/Users/yutaka/python/research/BC2ODPT/nodeA/4-show.json", "w") as f:
+    # with open("/Users/yutaka/python/research/BC2ODPT/nodeA/20200620.json", "w") as f:
     #     f.write(str(read_bc))
 
     print(len(read_bc))
@@ -215,9 +226,10 @@ if __name__ == "__main__":
     # J2 = json_db(P2)
     # print(J1 == J2)
 
-    print(comparison_ldbs(P1, P2, 10))
-    print(comparison_ldbs(P1, P3, 10))
-    # print(comparison_ldbs(P1, P4, 20))
+    print(comparison_ldbs(P1, P2, 20))
+    # print(comparison_ldbs(P1, P3, 10))
+    print(comparison_ldbs(P1, P4, 20))
+    # print(comparison_ldbs(P1, P5, 20))
 
     # a = []
     # for i in range(len(read_bc) - 1):

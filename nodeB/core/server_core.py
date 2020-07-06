@@ -20,6 +20,8 @@ from p2p.message_manager import (
     MSG_ENHANCED,
     SHARE_DB3,
 )
+import csv
+from datetime import datetime
 
 from p2p.connection_manager import LDB_P, PARAM_P, ZIP_P
 from setting import *
@@ -31,7 +33,8 @@ STATE_SHUTTING_DOWN = 3
 
 # TransactionPoolの確認頻度
 # 動作チェック用に数字小さくしてるけど、600(10分)くらいはあって良さそ
-CHECK_INTERVAL = 0
+CHECK_INTERVAL = 50
+from random import randint
 
 DEBUG = True
 
@@ -71,6 +74,10 @@ class ServerCore(object):
             self.flag_stop_block_build = False
 
     def start_block_building(self):
+        if RAND_INTERVAL:
+            CHECK_INTERVAL = randint(39, 60)
+        else:
+            CHECK_INTERVAL = INTERVAL
         self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
         self.bb_timer.start()
 
@@ -132,6 +139,10 @@ class ServerCore(object):
             print('Thread for generate_block_with_tp started!')
 
         try:
+            if RAND_INTERVAL:
+                CHECK_INTERVAL = randint(39, 60)
+            else:
+                CHECK_INTERVAL = INTERVAL
             print("■■■■■■■■■■■■■■■■■■■ Current BC ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
             print(self.bm.chain)
 
@@ -190,7 +201,9 @@ class ServerCore(object):
                     self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
                     self.bb_timer.start()
                     return
-                elif int(new_block_dic["block_number"]) <= int(self.bm.chain[-1]["block_number"]):
+                elif (int(new_block_dic["block_number"]) < int(self.bm.chain[-1]["block_number"])) or (
+                        (int(new_block_dic["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
+                        new_block_dic["total_majority"] <= self.bm.chain[-1]["total_majority"])):
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■ YOU LOSE ■■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
@@ -234,7 +247,7 @@ class ServerCore(object):
 
 
         except:
-            with open(f"{ADDRESS}_error.log", "a") as f:
+            with open(f"logs/{ADDRESS}_error.log", "a") as f:
                 print(traceback.print_exc(file=f))
 
     def __handle_message(self, msg, is_core, peer=None):
@@ -278,32 +291,63 @@ class ServerCore(object):
                 if DEBUG:
                     print('new_block: ', new_block)
 
-                if int(self.bm.chain[-1]["block_number"]) >= int(new_block["block_number"]):
+                # if int(self.bm.chain[-1]["block_number"]) >= int(new_block["block_number"]):
+                #     return
+                if (int(self.bm.chain[-1]["block_number"]) > int(new_block["block_number"])) or (
+                        self.bm.chain[-1]["total_majority"] >= new_block["total_majority"] and (
+                        int(self.bm.chain[-1]["block_number"]) == int(new_block["block_number"]))):
                     return
 
-                if self.bm.is_valid_block(self.prev_block_hash, new_block):
-                    # ブロック生成が行われていたら一旦停止してあげる（threadingなのでキレイに止まらない場合あり）
-                    # if self.is_bb_running:
-                    #     self.flag_stop_block_build = True
+                try:
+                    if self.bm.is_valid_block(self.prev_block_hash, new_block):
+                        # ブロック生成が行われていたら一旦停止してあげる（threadingなのでキレイに止まらない場合あり）
+                        # if self.is_bb_running:
+                        #     self.flag_stop_block_build = True
 
-                    # self.prev_block_hash = self.bm.get_hash(new_block)
-                    # self.bm.set_new_block(new_block)
+                        # self.prev_block_hash = self.bm.get_hash(new_block)
+                        # self.bm.set_new_block(new_block)
 
-                    if self.bm.set_new_block(new_block):
-                        self.prev_block_hash = self.bm.get_hash(new_block)
-                        self.tp.clear_my_transactions2(json.loads(new_block["transactions"]))
+                        if self.bm.set_new_block(new_block):
+                            self.prev_block_hash = self.bm.get_hash(new_block)
+                            self.tp.clear_my_transactions2(json.loads(new_block["addrs"]))
+                            with open(f'logs/{ADDRESS}_most_longest.csv', 'a') as f:
+                                writer = csv.writer(f)
+                                writer.writerow([
+                                    datetime.now(),
+                                    new_block["block_number"],
+                                    new_block["total_majority"],
+                                    new_block["nTx"],
+                                    new_block["over_half"],
+                                ])
 
-                    # self.save_block_2_db()
+                    elif self.bm.is_valid_block_booby(new_block):
+                        if (self.bm.chain[-1]["total_majority"] < new_block["total_majority"]) and (int(
+                                self.bm.chain[-1]["block_number"]) == int(new_block["block_number"])):
+                            deleted_block = self.bm.replace_latest_block(new_block)
+                            if deleted_block:
+                                self.prev_block_hash = self.bm.get_hash(new_block)
+                                self.tp.increment_tx(deleted_block, new_block)
+                                self.tp.clear_my_transactions2(json.loads(new_block["addrs"]))
+                                with open(f'logs/{ADDRESS}_most_majority.csv', 'a') as f:
+                                    writer = csv.writer(f)
+                                    writer.writerow([
+                                        datetime.now(),
+                                        new_block["block_number"],
+                                        new_block["total_majority"],
+                                        new_block["nTx"],
+                                        new_block["over_half"],
+                                    ])
 
-                    # self.flag_stop_block_build = False
+                    else:
+                        # ブロックとして不正ではないがVerifyにコケる場合は自分がorphanブロックを生成している
+                        # 可能性がある
+                        # if self.is_bb_running:  # TODO 試しで追加
+                        #     self.flag_stop_block_build = True
 
-                else:
-                    # ブロックとして不正ではないがVerifyにコケる場合は自分がorphanブロックを生成している
-                    # 可能性がある
-                    # if self.is_bb_running:  # TODO 試しで追加
-                    #     self.flag_stop_block_build = True
-
-                    self.get_all_chains_for_resolve_conflict()
+                        self.get_all_chains_for_resolve_conflict()
+                except:
+                    with open(f"logs/{ADDRESS}_error_1.log", "a") as f:
+                        print(traceback.print_exc(file=f))
 
             elif msg[2] == RSP_FULL_CHAIN:
 
@@ -321,7 +365,11 @@ class ServerCore(object):
                     result, pool_4_orphan_blocks = self.bm.resolve_conflicts(new_block_chain)
 
                     if result and self.cm.sync_flag:
-                        self.tp.justification_conflict(self.bm.chain[-6:])
+                        try:
+                            self.tp.justification_conflict(self.bm.chain[-6:])
+                        except:
+                            with open(f"logs/{ADDRESS}_error_2.log", "a") as f:
+                                print(traceback.print_exc(file=f))
 
                     if DEBUG:
                         print('blockchain received')

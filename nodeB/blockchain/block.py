@@ -19,7 +19,7 @@ class Block:
 
         self.timestamp = time()
         self.transactions = transactions
-        self.previous_block = previous_block_hash
+        self.previous_block = deepcopy(previous_block_hash)
         self.b_num = block_num
         self.address = address
         self.sc_self = sc_self
@@ -80,13 +80,37 @@ class Block:
         # difficultyの数字を増やせば増やすほど、末尾で揃えなければならない桁数が増える。
         i = 0
         suffix = '0' * difficulty
+        count = 0
         while True:
+
+            # if self.sc_self and self.sc_self.bm.chain:
+            #     if len(self.sc_self.bm.chain) > 1:
+            #         if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
+            #             self.lose_flag = True
+            #             return 0
 
             if self.sc_self and self.sc_self.bm.chain:
                 if len(self.sc_self.bm.chain) > 1:
-                    if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
+                    # if (int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"])) or (
+                    #         self.previous_block is not self.sc_self.prev_block_hash):
+                    if (int(self.b_num) < int(self.sc_self.bm.chain[-1]["block_number"])) or (
+                            (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
+                            self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"])) or (
+                            (self.previous_block is not self.sc_self.prev_block_hash) and (
+                            (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1)):
                         self.lose_flag = True
                         return 0
+
+            count += 1
+            if count % 200000 == 0:
+                count = 0
+                print("Mining!")
+                if self.sc_self:
+                    # if count % 2000000 == 0:
+                    #     print(self.sc_self.bm.chain)
+                    print("latest_block_num:", self.b_num)
+                    print("timestamp:", self.timestamp)
+                    print()
 
             nonce = str(i)
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
@@ -126,6 +150,7 @@ class Block:
         if not hash_txs:
             return {}
         have_hash_txs = dict()
+        addr_set = set()
         # for tx in self.transactions:
         #     hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
         #     have_hash_txs[hash_tx] = list(hash_txs[hash_tx])
@@ -136,12 +161,13 @@ class Block:
             try:
                 client_addrs = list(hash_txs[tx_hash]["addrs"])
                 exclusion_count = hash_txs[tx_hash]["count"]
-                if self.max_addrs < len(client_addrs):
-                    self.max_addrs = len(client_addrs)
                 # have_hash_txs[tx_hash] = client_addrs
+                for ad in client_addrs:
+                    addr_set.add(ad)
                 have_hash_txs[tx_hash] = {"addrs": client_addrs, "count": exclusion_count}
             except KeyError:
                 pass
+        self.max_addrs = len(addr_set)
         return have_hash_txs
 
     def _sum_all_client(self, hashs: dict, n: int):
@@ -182,6 +208,7 @@ class GenesisBlock(Block):
             'block_number': "0",
             'transactions': self.transactions,
             'genesis_block': True,
+            'timestamp': self.timestamp,
         }
         if include_nonce:
             d['nonce'] = self.nonce

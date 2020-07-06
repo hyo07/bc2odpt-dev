@@ -43,7 +43,7 @@ class TransactionPool:
     # tx poolから削除
     def clear_my_transactions2(self, txs: dict):
         with self.lock:
-            for tx in list(txs.keys()):
+            for tx in txs.keys():
                 # # hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
                 # hash_tx = self._hash_tx(tx)
                 hash_tx = tx
@@ -133,3 +133,15 @@ class TransactionPool:
         hash_tx = binascii.hexlify(hashlib.sha256(json.dumps(tx).encode('utf-8')).digest()).decode('ascii')
         # tx["client_address"] = cl_addr
         return hash_tx
+
+    # 最大多数の原理でブロックが更新されたとき、旧ブロックに存在し深ブロックに存在しないtxをtxpoolに戻す
+    def increment_tx(self, old_block, new_block):
+        old_tx = json.loads(old_block["transactions"])
+        old_addrs = json.loads(old_block["addrs"])
+        new_addrs = new_block["addrs"]
+        survive_dict = dict()
+        for hash_tx, raw_tx in zip(old_addrs.keys(), old_tx):
+            if not hash_tx in new_addrs:
+                survive_dict[hash_tx] = raw_tx
+        with self.lock:
+            self.transactions.update(survive_dict)
