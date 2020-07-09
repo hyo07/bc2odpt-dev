@@ -159,7 +159,8 @@ class Block:
         for tx_hash in tx_keys:
             # TODO 此処でなぜかKey Error出てしまう。根本的な原因不明。とりあえずやりたくないけどtryでスルーする
             try:
-                client_addrs = list(hash_txs[tx_hash]["addrs"])
+                # client_addrs = list(hash_txs[tx_hash]["addrs"])
+                client_addrs = sorted(list(hash_txs[tx_hash]["addrs"]))
                 exclusion_count = hash_txs[tx_hash]["count"]
                 # have_hash_txs[tx_hash] = client_addrs
                 for ad in client_addrs:

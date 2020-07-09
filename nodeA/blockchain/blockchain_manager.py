@@ -29,13 +29,22 @@ class BlockchainManager:
         with self.lock:
             self.chain.append(block)
 
-    def set_new_block(self, block):
+    def set_new_block(self, block, prev_hash):
         with self.lock:
             if int(self.chain[-1]["block_number"]) < int(block["block_number"]):
-                self.chain.append(block)
-                return True
+                if self.is_valid_block(prev_hash, block):
+                    self.chain.append(block)
+                    return True
+            elif (int(self.chain[-1]["block_number"]) == int(block["block_number"])) and (
+                    self.chain[-1]["total_majority"] < block["total_majority"]):
+                if self.is_valid_block_booby(block):
+                    deleted_block = self.chain.pop(-1)
+                    # TODO 本当は既存ブロックのtxと置き換わる新規ブロックの差分をtx pool に適用させたい
+                    self.chain.append(block)
+                    return True
             else:
                 return False
+        return False
 
     def replace_latest_block(self, block):
         with self.lock:
@@ -165,10 +174,16 @@ class BlockchainManager:
 
         # 自分のチェーンの中でだけ処理済みとなっているTransactionを救出する。現在のチェーンに含まれていない
         # ブロックを全て取り出す。時系列を考えての有効無効判定などはしないかなり簡易な処理。
-        if (new_chain_len > mychain_len) and (new_chain_num > mychain_num) and \
-                ((int(self.chain[0]["block_number"]) == int(
-                    chain[0]["block_number"]) or (self.chain[0]["block_number"] == "0") or (
-                          len(self.chain) < SAVE_BORDER_HALF))):
+        # if (new_chain_len > mychain_len) and (new_chain_num > mychain_num) and \
+        #         ((int(self.chain[0]["block_number"]) == int(
+        #             chain[0]["block_number"]) or (self.chain[0]["block_number"] == "0") or (
+        #                   len(self.chain) < SAVE_BORDER_HALF))):
+        if (((new_chain_len > mychain_len) and (new_chain_num > mychain_num)) or (
+                (int(self.chain[-1]["block_number"]) == int(chain[-1]["block_number"])) and (
+                self.chain[-1]["total_majority"] < chain[-1]["total_majority"]))) and (
+                (int(self.chain[0]["block_number"]) == int(chain[0]["block_number"])) or (
+                self.chain[0]["block_number"] == "0") or (len(self.chain) < SAVE_BORDER_HALF)):
+
             # if new_chain_len > mychain_len:
             # for b in pool_4_orphan_blocks: #TODO orphan_block及びトランザクションの重複チェックが出来次第
             #     for b2 in chain:

@@ -244,26 +244,26 @@ class ServerCore(object):
                     print("ブロック生成時間")
                     print(self.__calculate_gene_time(self.bm.chain[-2], self.bm.chain[-1]))
 
-                self.bm.set_new_block(new_block.to_dict())
-                self.prev_block_hash = self.bm.get_hash(new_block.to_dict())
+                if self.bm.set_new_block(new_block.to_dict(), self.prev_block_hash):
+                    self.prev_block_hash = self.bm.get_hash(new_block.to_dict())
 
-                # self.save_block_2_db()
+                    # self.save_block_2_db()
 
-                message_new_block = self.cm.get_message_text(MSG_NEW_BLOCK, json.dumps(new_block.to_dict()))
+                    message_new_block = self.cm.get_message_text(MSG_NEW_BLOCK, json.dumps(new_block.to_dict()))
 
-                self.cm.send_msg_to_all_peer(message_new_block)
+                    self.cm.send_msg_to_all_peer(message_new_block)
 
-                # index = len(result)
-                # self.tp.clear_my_transactions(index)
-                # 排除対象になったtxを取り込み済みtxから除く
-                exclusion_txs = new_block.get_exclusion_tx()
-                for ex_tx in exclusion_txs:
-                    try:
-                        del new_tp[ex_tx]
-                    except KeyError:
-                        pass
-                self.tp.add_through_count(exclusion_txs)
-                self.tp.clear_my_transactions2(new_tp)
+                    # index = len(result)
+                    # self.tp.clear_my_transactions(index)
+                    # 排除対象になったtxを取り込み済みtxから除く
+                    exclusion_txs = new_block.get_exclusion_tx()
+                    for ex_tx in exclusion_txs:
+                        try:
+                            del new_tp[ex_tx]
+                        except KeyError:
+                            pass
+                    self.tp.add_through_count(exclusion_txs)
+                    self.tp.clear_my_transactions2(new_tp)
 
                 # break
 
@@ -360,7 +360,7 @@ class ServerCore(object):
                         # self.prev_block_hash = self.bm.get_hash(new_block)
                         # self.bm.set_new_block(new_block)
 
-                        if self.bm.set_new_block(new_block):
+                        if self.bm.set_new_block(new_block, self.prev_block_hash):
                             self.prev_block_hash = self.bm.get_hash(new_block)
                             self.tp.clear_my_transactions2(json.loads(new_block["addrs"]))
                             with open(f'logs/{ADDRESS}_most_longest.csv', 'a') as f:
@@ -403,41 +403,49 @@ class ServerCore(object):
                         print(traceback.print_exc(file=f))
 
             elif msg[2] == RSP_FULL_CHAIN:
-
-                if not is_core:
-                    if DEBUG:
-                        print('blockchain received from unknown')
-                    return
-                # ブロックチェーン送信要求に応じて返却されたブロックチェーンを検証し、有効なものか検証した上で
-                # 自分の持つチェインと比較し優位な方を今後のブロックチェーンとして有効化する
-                new_block_chain = pickle.loads(msg[4].encode('utf8'))
-
-                if (int(new_block_chain[-1]["block_number"]) > int(self.bm.chain[-1]["block_number"])) and \
-                        ((int(new_block_chain[0]["block_number"]) == int(self.bm.chain[0]["block_number"])) or
-                         (self.bm.chain[0]["block_number"] == "0") or (len(self.bm.chain) < SAVE_BORDER_HALF)):
-                    result, pool_4_orphan_blocks = self.bm.resolve_conflicts(new_block_chain)
-
-                    if result and self.cm.sync_flag:
-                        try:
-                            self.tp.justification_conflict(self.bm.chain[-6:])
-                        except:
-                            with open(f"logs/{ADDRESS}_error_2.log", "a") as f:
-                                print(traceback.print_exc(file=f))
-
-                    if DEBUG:
-                        print('blockchain received')
-                    if result is not None:
-                        self.prev_block_hash = result
-                        # if len(pool_4_orphan_blocks) != 0:
-                        #     # orphanブロック群の中にあった未処理扱いになるTransactionをTransactionPoolに戻す
-                        #     new_transactions = self.bm.get_transactions_from_orphan_blocks(pool_4_orphan_blocks)
-                        #     for t in new_transactions:
-                        #         self.tp.set_new_transaction(t)
-                    else:
+                try:
+                    if not is_core:
                         if DEBUG:
-                            print('Received blockchain is useless...')
+                            print('blockchain received from unknown')
+                        return
+                    # ブロックチェーン送信要求に応じて返却されたブロックチェーンを検証し、有効なものか検証した上で
+                    # 自分の持つチェインと比較し優位な方を今後のブロックチェーンとして有効化する
+                    new_block_chain = pickle.loads(msg[4].encode('utf8'))
 
-                # self.flag_stop_block_build = False
+                    # if (int(new_block_chain[-1]["block_number"]) > int(self.bm.chain[-1]["block_number"])) and (
+                    #         (int(new_block_chain[0]["block_number"]) == int(self.bm.chain[0]["block_number"])) or (
+                    #         self.bm.chain[0]["block_number"] == "0") or (len(self.bm.chain) < SAVE_BORDER_HALF)):
+                    if ((int(new_block_chain[-1]["block_number"]) > int(self.bm.chain[-1]["block_number"])) or (
+                            (int(new_block_chain[-1]["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
+                            new_block_chain[-1]["total_majority"] > self.bm.chain[-1]["total_majority"]))) and (
+                            (int(new_block_chain[0]["block_number"]) == int(self.bm.chain[0]["block_number"])) or (
+                            self.bm.chain[0]["block_number"] == "0") or (len(self.bm.chain) < SAVE_BORDER_HALF)):
+                        result, pool_4_orphan_blocks = self.bm.resolve_conflicts(new_block_chain)
+
+                        if result and self.cm.sync_flag:
+                            try:
+                                self.tp.justification_conflict(self.bm.chain[-6:])
+                            except:
+                                with open(f"logs/{ADDRESS}_error_2.log", "a") as f:
+                                    print(traceback.print_exc(file=f))
+
+                        if DEBUG:
+                            print('blockchain received')
+                        if result is not None:
+                            self.prev_block_hash = result
+                            # if len(pool_4_orphan_blocks) != 0:
+                            #     # orphanブロック群の中にあった未処理扱いになるTransactionをTransactionPoolに戻す
+                            #     new_transactions = self.bm.get_transactions_from_orphan_blocks(pool_4_orphan_blocks)
+                            #     for t in new_transactions:
+                            #         self.tp.set_new_transaction(t)
+                        else:
+                            if DEBUG:
+                                print('Received blockchain is useless...')
+
+                    # self.flag_stop_block_build = False
+                except:
+                    with open(f"logs/{ADDRESS}_error_3.log", "a") as f:
+                        print(traceback.print_exc(file=f))
 
             elif msg[2] == MSG_ENHANCED:
                 # P2P Network を単なるトランスポートして使っているアプリケーションが独自拡張したメッセージはここで処理する。SimpleBitcoin としてはこの種別は使わない
