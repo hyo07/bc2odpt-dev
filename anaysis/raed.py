@@ -180,58 +180,33 @@ def read_json_file(path="test.json"):
 
 if __name__ == "__main__":
     pass
-    P1 = "/Users/yutaka/python/research/BC2ODPT/nodeA/db/ldb/"
-    P2 = "/Users/yutaka/python/research/BC2ODPT/nodeB/db/ldb/"
-    P3 = "/Users/yutaka/python/research/BC2ODPT/nodeX_3/db/ldb/"
-    P4 = "/Users/yutaka/python/research/BC2ODPT/nodeX_4/db/ldb/"
-    P5 = "/Users/yutaka/python/research/BC2ODPT/nodeX_5/db/ldb/"
 
-    # read_bc = json_db(P1)
+    import os
+
+    root_P = os.path.dirname(__file__) + "/.."
+    P1 = root_P + "/nodeA/db/ldb/"
+    P2 = root_P + "/nodeB/db/ldb/"
+    P3 = root_P + "/nodeX_3/db/ldb/"
+    P4 = root_P + "/nodeX_4/db/ldb/"
+    P5 = root_P + "/nodeX_5/db/ldb/"
+
+    read_bc = json_db(P1)
     # print(read_bc)
+
     # with open("/Users/yutaka/python/research/BC2ODPT/logs/20200727.json", "w") as f:
-    #     f.write(str(read_bc))
-
-    # print(len(read_bc))
-    # print(is_valid_chain(read_bc))
-    # print(valid_all(P1))
-
-    # with open("test.txt", "w") as f:
-    #     f.write(str(read_bc))
-
-    # with open("memo.jslon", "w") as f:
     #     f.write(json.dumps(read_bc))
 
+    print(len(read_bc))
+    print(is_valid_chain(read_bc))
+    # print(valid_all(P1))
+
     print("---------------------------------------------")
-    # J1 = json_db(P1)
-    # J2 = json_db(P2)
-    # print(J1 == J2)
 
-    # print(comparison_ldbs(P1, P2, 20))
-    # print(comparison_ldbs(P1, P3, 20))
-    # print(comparison_ldbs(P1, P4, 20))
-    # print(comparison_ldbs(P1, P5, 20))
-
-    # a = []
-    # for i in range(len(read_bc) - 1):
-    #     try:
-    #         tx = json.loads(read_bc[i]["transactions"])
-    #         tx_count = len(tx)
-    #     except json.decoder.JSONDecodeError:
-    #         tx_count =
-    #     ts = read_bc[i + 1]["timestamp"] - read_bc[i]["timestamp"]
-    #     a.append(ts)
-    #     print(ts)
-    # print("平均:", sum(a)/len(a))
-
-    # from j_data import json_data
-    # 
-    # ts = 0
-    # ts_list = []
-    # for block in json_data:
-    #     if ts != 0:
-    #         ts_list.append(block["timestamp"] - ts)
-    #     ts = block["timestamp"]
-    # print(sum(ts_list) / len(ts_list) - 1)
+    # diffチェック
+    print(comparison_ldbs(P1, P2, 20))
+    print(comparison_ldbs(P1, P3, 20))
+    print(comparison_ldbs(P1, P4, 20))
+    print(comparison_ldbs(P1, P5, 20))
 
     # gene_time_list = []
     # ts = 0
@@ -243,4 +218,8 @@ if __name__ == "__main__":
     #     ts = block["timestamp"]
     # print("平均:", sum(gene_time_list) / len(gene_time_list))
 
-    print(read_json_file("test.json"))
+    # file読み
+    # print(read_json_file("test.json"))
+
+    # clientを調べる
+    print(read_ones_db(P1))
