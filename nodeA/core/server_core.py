@@ -33,7 +33,7 @@ STATE_SHUTTING_DOWN = 3
 
 # TransactionPoolの確認頻度
 # 動作チェック用に数字小さくしてるけど、600(10分)くらいはあって良さそ
-CHECK_INTERVAL = 50
+CHECK_INTERVAL = 0
 from random import randint
 
 DEBUG = True
@@ -74,10 +74,14 @@ class ServerCore(object):
             self.flag_stop_block_build = False
 
     def start_block_building(self):
-        if RAND_INTERVAL:
-            CHECK_INTERVAL = randint(39, 60)
+        if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERBAL:
+            CHECK_INTERVAL = 0
         else:
-            CHECK_INTERVAL = INTERVAL
+            if RAND_INTERVAL:
+                CHECK_INTERVAL = randint(39, 60)
+            else:
+                CHECK_INTERVAL = INTERVAL
+
         self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
         self.bb_timer.start()
 
@@ -139,10 +143,14 @@ class ServerCore(object):
             print('Thread for generate_block_with_tp started!')
 
         try:
-            if RAND_INTERVAL:
-                CHECK_INTERVAL = randint(39, 60)
+            if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERBAL:
+                CHECK_INTERVAL = 0
             else:
-                CHECK_INTERVAL = INTERVAL
+                if RAND_INTERVAL:
+                    CHECK_INTERVAL = randint(39, 60)
+                else:
+                    CHECK_INTERVAL = INTERVAL
+
             print("■■■■■■■■■■■■■■■■■■■ Current BC ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
             print(self.bm.chain)
 
@@ -264,6 +272,16 @@ class ServerCore(object):
                             pass
                     self.tp.add_through_count(exclusion_txs)
                     self.tp.clear_my_transactions2(new_tp)
+
+                    with open(f'logs/{ADDRESS}_generate_block.csv', 'a') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([
+                            datetime.now(),
+                            new_block_dic["block_number"],
+                            new_block_dic["total_majority"],
+                            new_block_dic["nTx"],
+                            new_block_dic["over_half"],
+                        ])
 
                 # break
 

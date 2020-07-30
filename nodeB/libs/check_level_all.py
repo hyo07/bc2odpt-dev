@@ -62,10 +62,10 @@ def valid_all(ldb_p):
 
 # -------------------------------------------------------------------------------------------------------------------------
 
-def is_valid_block(prev_block_hash, block, difficulty=3):
+# 難易度調整版
+def is_valid_block(prev_block_hash, block):
     # print("prev_block_hash:", prev_block_hash)
     # ブロック単体の正当性を検証する
-    suffix = '0' * difficulty
     nonce = block['nonce']
     transactions = block['transactions']
     addrs = block["addrs"]
@@ -85,17 +85,12 @@ def is_valid_block(prev_block_hash, block, difficulty=3):
         return False
     else:
         digest = binascii.hexlify(_get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-        if digest.endswith(suffix):
-            # print('OK, this seems valid block')
+        if int(digest, 16) <= int(block["difficulty"], 16):
             block['nonce'] = nonce
             block['transactions'] = transactions
             block["addrs"] = addrs
             return True
         else:
-            # print('Invalid block (bad nonce)')
-            # print('nonce :', nonce)
-            # print('digest :', digest)
-            # print('suffix', suffix)
             return False
 
 

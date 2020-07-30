@@ -5,23 +5,6 @@ import binascii
 import hashlib
 
 
-# # ブロック番号とvalueを表示
-# def print_db():
-#     p = "../db/1/"
-#     db_list = list(glob(p + "block*.ldb"))
-#     s_l = []
-#     for db_name in sorted(db_list):
-#         db = plyvel.DB(str(db_name), create_if_missing=False)
-#         for k, v in db:
-#             key = k.decode()
-#             val = v.decode()
-#             mix = key + " => " + str(json.loads(val))
-#             s_l.append(mix)
-#
-#     for s in sorted(s_l):
-#         print(s)
-#
-#
 # json形式で読み込み
 def json_db(p):
     # p = "../db/2/ldb/"
@@ -63,46 +46,8 @@ def valid_all(ldb_p):
 
 # -------------------------------------------------------------------------------------------------------------------------
 
-# def is_valid_block(prev_block_hash, block, difficulty=3):
-#     # print("prev_block_hash:", prev_block_hash)
-#     # ブロック単体の正当性を検証する
-#     suffix = '0' * difficulty
-#     nonce = block['nonce']
-#     transactions = block['transactions']
-#     addrs = block["addrs"]
-#     del block['nonce']
-#     del block['transactions']
-#     del block['addrs']
-#     # print(block)
-#
-#     message = json.dumps(block, sort_keys=True)
-#     # print("message", message)
-#     nonce = str(nonce)
-#
-#     if block['previous_block'] != prev_block_hash:
-#         # print('Invalid block (bad previous_block)')
-#         # print(block['previous_block'])
-#         # print(prev_block_hash)
-#         return False
-#     else:
-#         digest = binascii.hexlify(_get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-#         if digest.endswith(suffix):
-#             # print('OK, this seems valid block')
-#             block['nonce'] = nonce
-#             block['transactions'] = transactions
-#             block["addrs"] = addrs
-#             return True
-#         else:
-#             # print('Invalid block (bad nonce)')
-#             # print('nonce :', nonce)
-#             # print('digest :', digest)
-#             # print('suffix', suffix)
-#             return False
-
-
 # 難易度調整版
 def is_valid_block(prev_block_hash, block):
-    # print("prev_block_hash:", prev_block_hash)
     # ブロック単体の正当性を検証する
     nonce = block['nonce']
     transactions = block['transactions']
@@ -110,16 +55,11 @@ def is_valid_block(prev_block_hash, block):
     del block['nonce']
     del block['transactions']
     del block['addrs']
-    # print(block)
 
     message = json.dumps(block, sort_keys=True)
-    # print("message", message)
     nonce = str(nonce)
 
     if block['previous_block'] != prev_block_hash:
-        # print('Invalid block (bad previous_block)')
-        # print(block['previous_block'])
-        # print(prev_block_hash)
         return False
     else:
         digest = binascii.hexlify(_get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
@@ -154,7 +94,6 @@ def _get_double_sha256(message):
 
 def get_hash(block):
     block_string = json.dumps(block, sort_keys=True)
-    # print("BlockchainManager: block_string", block_string)
     return binascii.hexlify(_get_double_sha256(block_string.encode('utf-8'))).decode('ascii')
 
 
@@ -193,8 +132,6 @@ def comparison_ldbs(p1, p2, border=10):
 
 # -----------------------------------------------------------------------------------------
 def read_ones_db(p):
-    # p = "../db/2/ldb/"
-    # p = "../db/1/ldb/"
     db_list = list(glob(p + "block*.ldb"))
     total_tx = 0
     total_addr = 0
@@ -230,6 +167,17 @@ def read_ones_db(p):
             "clientA": clientA, "clientB": clientB, "clientC": clientC, "clientD": clientD, "clientE": clientE}
 
 
+def read_json_file(path="test.json"):
+    with open(path, "r") as f:
+        text = f.read()
+        try:
+            block_chain = json.loads(text)
+        except:
+            re_hoge = text.replace("\'", "\"").replace("True", "true").replace("False", "false")
+            block_chain = json.loads(re_hoge)
+    return block_chain
+
+
 if __name__ == "__main__":
     pass
     P1 = "/Users/yutaka/python/research/BC2ODPT/nodeA/db/ldb/"
@@ -238,13 +186,13 @@ if __name__ == "__main__":
     P4 = "/Users/yutaka/python/research/BC2ODPT/nodeX_4/db/ldb/"
     P5 = "/Users/yutaka/python/research/BC2ODPT/nodeX_5/db/ldb/"
 
-    read_bc = json_db(P1)
+    # read_bc = json_db(P1)
     # print(read_bc)
-    # with open("/Users/yutaka/python/research/BC2ODPT/logs/log_show.json", "w") as f:
-    #     f.write(json.dumps(read_bc))
+    # with open("/Users/yutaka/python/research/BC2ODPT/logs/20200727.json", "w") as f:
+    #     f.write(str(read_bc))
 
-    print(len(read_bc))
-    print(is_valid_chain(read_bc))
+    # print(len(read_bc))
+    # print(is_valid_chain(read_bc))
     # print(valid_all(P1))
 
     # with open("test.txt", "w") as f:
@@ -258,10 +206,10 @@ if __name__ == "__main__":
     # J2 = json_db(P2)
     # print(J1 == J2)
 
-    print(comparison_ldbs(P1, P2, 10))
-    print(comparison_ldbs(P1, P3, 20))
-    print(comparison_ldbs(P1, P4, 20))
-    print(comparison_ldbs(P1, P5, 20))
+    # print(comparison_ldbs(P1, P2, 20))
+    # print(comparison_ldbs(P1, P3, 20))
+    # print(comparison_ldbs(P1, P4, 20))
+    # print(comparison_ldbs(P1, P5, 20))
 
     # a = []
     # for i in range(len(read_bc) - 1):
@@ -275,4 +223,24 @@ if __name__ == "__main__":
     #     print(ts)
     # print("平均:", sum(a)/len(a))
 
-    print(read_ones_db(P1))
+    # from j_data import json_data
+    # 
+    # ts = 0
+    # ts_list = []
+    # for block in json_data:
+    #     if ts != 0:
+    #         ts_list.append(block["timestamp"] - ts)
+    #     ts = block["timestamp"]
+    # print(sum(ts_list) / len(ts_list) - 1)
+
+    # gene_time_list = []
+    # ts = 0
+    # for block in read_bc:
+    #     if ts != 0:
+    #         sa = block["timestamp"] - ts
+    #         print(sa)
+    #         gene_time_list.append(sa)
+    #     ts = block["timestamp"]
+    # print("平均:", sum(gene_time_list) / len(gene_time_list))
+
+    print(read_json_file("test.json"))

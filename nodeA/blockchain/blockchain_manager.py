@@ -207,7 +207,7 @@ class BlockchainManager:
 
     def is_valid_block(self, prev_block_hash, block, difficulty=DIFFICULTY):
         # ブロック単体の正当性を検証する
-        suffix = '0' * difficulty
+        # suffix = '0' * difficulty
         block_4_pow = copy.deepcopy(block)
         nonce = block_4_pow['nonce']
         del block_4_pow['nonce']
@@ -228,7 +228,10 @@ class BlockchainManager:
             return False
         else:
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-            if digest.endswith(suffix):
+            # if digest.endswith(suffix):
+            #     print('OK, this seems valid block')
+            #     return True
+            if int(digest, 16) <= int(block_4_pow["difficulty"], 16):
                 print('OK, this seems valid block')
                 return True
             else:
@@ -236,12 +239,12 @@ class BlockchainManager:
                     print('Invalid block (bad nonce)')
                     print('nonce :', nonce)
                     print('digest :', digest)
-                    print('suffix', suffix)
+                    # print('suffix', suffix)
                 return False
 
     def is_valid_block_booby(self, block, difficulty=DIFFICULTY):
         # ブロック単体の正当性を検証する
-        suffix = '0' * difficulty
+        # suffix = '0' * difficulty
         block_4_pow = copy.deepcopy(block)
         nonce = block_4_pow['nonce']
         del block_4_pow['nonce']
@@ -264,7 +267,10 @@ class BlockchainManager:
             return False
         else:
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-            if digest.endswith(suffix):
+            # if digest.endswith(suffix):
+            #     print('OK, this seems valid block')
+            #     return True
+            if int(digest, 16) <= int(block_4_pow["difficulty"], 16):
                 print('OK, this seems valid block')
                 return True
             else:
@@ -272,7 +278,7 @@ class BlockchainManager:
                     print('Invalid block (bad nonce)')
                     print('nonce :', nonce)
                     print('digest :', digest)
-                    print('suffix', suffix)
+                    # print('suffix', suffix)
                 return False
 
     def is_valid_chain(self, chain):
@@ -304,6 +310,24 @@ class BlockchainManager:
         block_string = json.dumps(block, sort_keys=True)
         # print("BlockchainManager: block_string", block_string)
         return binascii.hexlify(self._get_double_sha256((block_string).encode('utf-8'))).decode('ascii')
+
+    # TODO こっちのが良いのか案
+    # def get_hash(self, block):
+    #     """
+    #     正当性確認に使うためブロックのハッシュ値を取る
+    #         param
+    #             block: Block
+    #     """
+    #     copy_block = copy.deepcopy(block)
+    #     del copy_block['nonce']
+    #     del copy_block['transactions']
+    #     del copy_block['addrs']
+    #
+    #     if DEBUG:
+    #         print('BlockchainManager: get_hash was called!')
+    #     block_string = json.dumps(copy_block, sort_keys=True)
+    #     # print("BlockchainManager: block_string", block_string)
+    #     return binascii.hexlify(self._get_double_sha256((block_string).encode('utf-8'))).decode('ascii')
 
     def save_block_2_db(self):
         with self.lock:

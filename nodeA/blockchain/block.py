@@ -31,6 +31,8 @@ class Block:
         if self.over_half < 2:
             self.over_half = 2
         self.total_clients = self._sum_all_client(self.include_hashs, self.over_half)
+        self.difficulty = self.adjust_diff()
+        self.test = None
 
         current = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         if DEBUG:
@@ -46,14 +48,18 @@ class Block:
             print(current2)
 
     def to_dict(self, include_nonce=True):
+        diff_16 = format(int(self.difficulty), "x")
+        if len(diff_16) < 64:
+            diff_16 = ("0" * (64 - len(diff_16))) + diff_16
+        self.test = diff_16
         d = {
             'block_number': str(self.b_num),
             'timestamp': self.timestamp,
             "nTx": len(self.transactions),
             'previous_block': self.previous_block,
             'address': self.address,
-            'difficulty': DIFFICULTY,
-            # 'addrs': json.dumps(self.include_hashs),
+            # 'difficulty': DIFFICULTY,
+            "difficulty": diff_16,
             'total_majority': self.total_clients,
             "over_half": self.over_half,
         }
@@ -76,19 +82,50 @@ class Block:
     def get_exclusion_tx(self):
         return self.exclusion_tx
 
-    def _compute_nonce_for_pow(self, message, difficulty=DIFFICULTY):
-        # difficultyの数字を増やせば増やすほど、末尾で揃えなければならない桁数が増える。
+    # def _compute_nonce_for_pow(self, message, difficulty=DIFFICULTY):
+    #     # difficultyの数字を増やせば増やすほど、末尾で揃えなければならない桁数が増える。
+    #     i = 0
+    #     suffix = '0' * difficulty
+    #     count = 0
+    #     while True:
+    #
+    #         # if self.sc_self and self.sc_self.bm.chain:
+    #         #     if len(self.sc_self.bm.chain) > 1:
+    #         #         if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
+    #         #             self.lose_flag = True
+    #         #             return 0
+    #
+    #         if self.sc_self and self.sc_self.bm.chain:
+    #             if len(self.sc_self.bm.chain) > 1:
+    #                 if (int(self.b_num) < int(self.sc_self.bm.chain[-1]["block_number"])) or (
+    #                         (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
+    #                         self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"])) or (
+    #                         (self.previous_block is not self.sc_self.prev_block_hash) and (
+    #                         (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1)):
+    #                     self.lose_flag = True
+    #                     return 0
+    #
+    #         count += 1
+    #         if count % 200000 == 0:
+    #             count = 0
+    #             print("Mining!")
+    #             if self.sc_self:
+    #                 # if count % 2000000 == 0:
+    #                 #     print(self.sc_self.bm.chain)
+    #                 print("latest_block_num:", self.b_num)
+    #                 print("timestamp:", self.timestamp)
+    #                 print()
+    #
+    #         nonce = str(i)
+    #         digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
+    #         if digest.endswith(suffix):
+    #             return nonce
+    #         i += 1
+    #         # i += random.randint(1, 10)
+
+    def _compute_nonce_for_pow(self, message):
         i = 0
-        suffix = '0' * difficulty
-        count = 0
         while True:
-
-            # if self.sc_self and self.sc_self.bm.chain:
-            #     if len(self.sc_self.bm.chain) > 1:
-            #         if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
-            #             self.lose_flag = True
-            #             return 0
-
             if self.sc_self and self.sc_self.bm.chain:
                 if len(self.sc_self.bm.chain) > 1:
                     if (int(self.b_num) < int(self.sc_self.bm.chain[-1]["block_number"])) or (
@@ -99,10 +136,9 @@ class Block:
                         self.lose_flag = True
                         return 0
 
-            count += 1
-            if count % 200000 == 0:
-                count = 0
+            if i % 200000 == 0:
                 print("Mining!")
+                print(f"diff: {self.test}")
                 if self.sc_self:
                     # if count % 2000000 == 0:
                     #     print(self.sc_self.bm.chain)
@@ -112,7 +148,7 @@ class Block:
 
             nonce = str(i)
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-            if digest.endswith(suffix):
+            if int(digest, 16) <= self.difficulty:
                 return nonce
             i += 1
             # i += random.randint(1, 10)
@@ -158,7 +194,7 @@ class Block:
             # TODO 此処でなぜかKey Error出てしまう。根本的な原因不明。とりあえずやりたくないけどtryでスルーする
             try:
                 # client_addrs = list(hash_txs[tx_hash]["addrs"])
-                client_addrs = sorted(list(hash_txs[tx_hash]["addrs"]))
+                client_addrs = list(hash_txs[tx_hash]["addrs"])
                 exclusion_count = hash_txs[tx_hash]["count"]
                 # have_hash_txs[tx_hash] = client_addrs
                 for ad in client_addrs:
@@ -191,6 +227,25 @@ class Block:
 
         return total
 
+    def adjust_diff(self):
+        if (DIFFICULTY_ADUJST is False) or (not (self.sc_self and self.sc_self.bm.chain)) or (
+                len(self.sc_self.bm.chain) < SAVE_BORDER_HALF):
+            default_diff = ('0' * DIFFICULTY) + ((64 - DIFFICULTY) * "f")
+            return int(default_diff, 16)
+        else:
+            chain = list(self.sc_self.bm.chain)
+            chain = chain[-1 * SAVE_BORDER_HALF:]
+            start_ts = chain[0]["timestamp"]
+            total_ts = self.timestamp - start_ts
+
+            total_probability = 0
+            sha256_max = int("f" * 64, 16)
+            for block in chain:
+                w_s = int(block["difficulty"], 16) / sha256_max
+                total_probability += 1 / w_s
+            w_t1 = (total_ts / 60) / (POW_TIME * total_probability)
+            return int(w_t1 * sha256_max)
+
 
 class GenesisBlock(Block):
     """
@@ -208,6 +263,7 @@ class GenesisBlock(Block):
             'transactions': self.transactions,
             'genesis_block': True,
             'timestamp': self.timestamp,
+            "difficulty": ('0' * DIFFICULTY) + ((64 - DIFFICULTY) * "f"),
         }
         if include_nonce:
             d['nonce'] = self.nonce

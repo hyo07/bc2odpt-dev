@@ -237,6 +237,16 @@ class ServerCore(object):
                     self.tp.add_through_count(exclusion_txs)
                     self.tp.clear_my_transactions2(new_tp)
 
+                    with open(f'logs/{ADDRESS}_generate_block.csv', 'a') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([
+                            datetime.now(),
+                            new_block_dic["block_number"],
+                            new_block_dic["total_majority"],
+                            new_block_dic["nTx"],
+                            new_block_dic["over_half"],
+                        ])
+
                 # break
 
             # print('Current prev_block_hash is ... ', self.prev_block_hash)
