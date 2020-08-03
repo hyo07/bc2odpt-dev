@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     import os
 
-    root_P = os.path.dirname(__file__) + "/.."
+    root_P = os.path.dirname(os.path.abspath(__file__)) + "/.."
     P1 = root_P + "/nodeA/db/ldb/"
     P2 = root_P + "/nodeB/db/ldb/"
     P3 = root_P + "/nodeX_3/db/ldb/"
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     read_bc = json_db(P1)
     # print(read_bc)
 
-    # with open("/Users/yutaka/python/research/BC2ODPT/logs/20200727.json", "w") as f:
+    # with open("/Users/yutaka/python/research/BC2ODPT/logs/20200801.json", "w") as f:
     #     f.write(json.dumps(read_bc))
 
     print(len(read_bc))
