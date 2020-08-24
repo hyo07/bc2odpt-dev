@@ -74,7 +74,7 @@ class ServerCore(object):
             self.flag_stop_block_build = False
 
     def start_block_building(self):
-        if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERBAL:
+        if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERVAL:
             CHECK_INTERVAL = 0
         else:
             if RAND_INTERVAL:
@@ -143,7 +143,7 @@ class ServerCore(object):
             print('Thread for generate_block_with_tp started!')
 
         try:
-            if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERBAL:
+            if (int(level_param.get_block_num(PARAM_P) + len(self.bm.chain)) < (SAVE_BORDER - 5)) and SKIP_INTERVAL:
                 CHECK_INTERVAL = 0
             else:
                 if RAND_INTERVAL:
@@ -234,11 +234,19 @@ class ServerCore(object):
                     self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
                     self.bb_timer.start()
                     return
-                elif (int(new_block_dic["block_number"]) < int(self.bm.chain[-1]["block_number"])) or (
-                        (int(new_block_dic["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
-                        new_block_dic["total_majority"] <= self.bm.chain[-1]["total_majority"])):
+                elif int(new_block_dic["block_number"]) < int(self.bm.chain[-1]["block_number"]):
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■ YOU LOSE ■■■■■■■■■■■■■■■")
+                    print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
+                    self.flag_stop_block_build = False
+                    self.is_bb_running = False
+                    self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
+                    self.bb_timer.start()
+                    return
+                elif (int(new_block_dic["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
+                        new_block_dic["total_majority"] <= self.bm.chain[-1]["total_majority"]):
+                    print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
+                    print("■■■■■■■■■■■■■■ u r 少数派 ■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
                     self.flag_stop_block_build = False
                     self.is_bb_running = False

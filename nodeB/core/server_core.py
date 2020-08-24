@@ -201,11 +201,19 @@ class ServerCore(object):
                     self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
                     self.bb_timer.start()
                     return
-                elif (int(new_block_dic["block_number"]) < int(self.bm.chain[-1]["block_number"])) or (
-                        (int(new_block_dic["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
-                        new_block_dic["total_majority"] <= self.bm.chain[-1]["total_majority"])):
+                elif int(new_block_dic["block_number"]) < int(self.bm.chain[-1]["block_number"]):
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■ YOU LOSE ■■■■■■■■■■■■■■■")
+                    print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
+                    self.flag_stop_block_build = False
+                    self.is_bb_running = False
+                    self.bb_timer = threading.Timer(CHECK_INTERVAL, self.__generate_block_with_tp)
+                    self.bb_timer.start()
+                    return
+                elif (int(new_block_dic["block_number"]) == int(self.bm.chain[-1]["block_number"])) and (
+                        new_block_dic["total_majority"] <= self.bm.chain[-1]["total_majority"]):
+                    print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
+                    print("■■■■■■■■■■■■■■ u r 少数派 ■■■■■■■■■■■■■■")
                     print("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■")
                     self.flag_stop_block_build = False
                     self.is_bb_running = False

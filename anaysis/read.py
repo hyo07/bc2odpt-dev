@@ -182,38 +182,37 @@ def read_json_file(path="test.json"):
 if __name__ == "__main__":
     pass
 
-    # import os
+    import os
+
+    root_P = os.path.dirname(os.path.abspath(__file__)) + "/.."
+    P1 = root_P + "/nodeA/db/ldb/"
+    P2 = root_P + "/nodeB/db/ldb/"
+    P3 = root_P + "/nodeX_3/db/ldb/"
+    P4 = root_P + "/nodeX_4/db/ldb/"
+    P5 = root_P + "/nodeX_5/db/ldb/"
+
+    read_bc = json_db(P1)
+    # file読み
+    # file_name = "20200817.json"
+    # read_bc = read_json_file(file_name)
+
+    # print(read_bc)
+    print(len(read_bc))
     #
-    # root_P = os.path.dirname(os.path.abspath(__file__)) + "/.."
-    # P1 = root_P + "/nodeA/db/ldb/"
-    # P2 = root_P + "/nodeB/db/ldb/"
-    # P3 = root_P + "/nodeX_3/db/ldb/"
-    # P4 = root_P + "/nodeX_4/db/ldb/"
-    # P5 = root_P + "/nodeX_5/db/ldb/"
-    #
-    # read_bc = json_db(P1)
-    # # print(read_bc)
-    #
-    # # with open("/Users/yutaka/python/research/BC2ODPT/logs/20200801.json", "w") as f:
-    # #     f.write(json.dumps(read_bc))
+    # with open(root_P + "/logs/20200818.json", "w") as f:
+    #     f.write(json.dumps(read_bc))
     #
     # print(len(read_bc))
-    # print(is_valid_chain(read_bc))
+    print(is_valid_chain(read_bc))
     # # print(valid_all(P1))
     #
-    # print("---------------------------------------------")
+    print("---------------------------------------------")
     #
-    # # diffチェック
-    # print(comparison_ldbs(P1, P2, 20))
-    # print(comparison_ldbs(P1, P3, 20))
-    # print(comparison_ldbs(P1, P4, 20))
-    # print(comparison_ldbs(P1, P5, 20))
-
-    # file読み
-    # file_name = "20200805.json"
-    # print(read_json_file("test.json"))
-    # read_bc = read_json_file(file_name)
-    # print(len(read_bc))
+    # diffチェック
+    print(comparison_ldbs(P1, P2, 20))
+    print(comparison_ldbs(P1, P3, 20))
+    print(comparison_ldbs(P1, P4, 20))
+    print(comparison_ldbs(P1, P5, 20))
 
     # gene_time_list = []
     # ts = 0
@@ -225,8 +224,8 @@ if __name__ == "__main__":
     #     ts = block["timestamp"]
     # print("平均:", sum(gene_time_list) / len(gene_time_list))
 
-    # # clientを調べる
-    # print(read_ones_db(P1))
+    # clientを調べる
+    print(read_ones_db(P1))
 
     # for block in read_bc:
     #     print(float(int(block["difficulty"], 16)))
