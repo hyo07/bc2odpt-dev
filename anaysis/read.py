@@ -63,13 +63,22 @@ def is_valid_block(prev_block_hash, block):
         return False
     else:
         digest = binascii.hexlify(_get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-        if int(digest, 16) <= int(block["difficulty"], 16):
-            block['nonce'] = nonce
-            block['transactions'] = transactions
-            block["addrs"] = addrs
-            return True
-        else:
-            return False
+        try:
+            if int(digest, 16) <= int(block["target"], 16):
+                block['nonce'] = nonce
+                block['transactions'] = transactions
+                block["addrs"] = addrs
+                return True
+            else:
+                return False
+        except KeyError:
+            if int(digest, 16) <= int(block["difficulty"], 16):
+                block['nonce'] = nonce
+                block['transactions'] = transactions
+                block["addrs"] = addrs
+                return True
+            else:
+                return False
 
 
 def is_valid_chain(chain):
@@ -228,4 +237,7 @@ if __name__ == "__main__":
     print(read_ones_db(P1))
 
     # for block in read_bc:
-    #     print(float(int(block["difficulty"], 16)))
+    #     try:
+    #         print(float(int(block["target"], 16)))
+    #     except KeyError:
+    #         print(float(int(block["difficulty"], 16)))

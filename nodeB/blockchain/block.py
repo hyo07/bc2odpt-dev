@@ -31,7 +31,7 @@ class Block:
         if self.over_half < 2:
             self.over_half = 2
         self.total_clients = self._sum_all_client(self.include_hashs, self.over_half)
-        self.difficulty = self.adjust_diff()
+        self.target = self.adjust_target()
         self.test = None
 
         current = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
@@ -48,18 +48,18 @@ class Block:
             print(current2)
 
     def to_dict(self, include_nonce=True):
-        diff_16 = format(int(self.difficulty), "x")
-        if len(diff_16) < 64:
-            diff_16 = ("0" * (64 - len(diff_16))) + diff_16
-        self.test = diff_16
+        target_16 = format(int(self.target), "x")
+        if len(target_16) < 64:
+            target_16 = ("0" * (64 - len(target_16))) + target_16
+        self.test = target_16
         d = {
             'block_number': str(self.b_num),
             'timestamp': self.timestamp,
             "nTx": len(self.transactions),
             'previous_block': self.previous_block,
             'address': self.address,
-            # 'difficulty': DIFFICULTY,
-            "difficulty": diff_16,
+            # 'target': TARGET,
+            "target": target_16,
             'total_majority': self.total_clients,
             "over_half": self.over_half,
         }
@@ -147,7 +147,7 @@ class Block:
 
             if i % 200000 == 0:
                 print("Mining!")
-                print(f"diff: {self.test}")
+                print(f"target: {self.test}")
                 if self.sc_self:
                     # if count % 2000000 == 0:
                     #     print(self.sc_self.bm.chain)
@@ -157,7 +157,7 @@ class Block:
 
             nonce = str(i)
             digest = binascii.hexlify(self._get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-            if int(digest, 16) <= self.difficulty:
+            if int(digest, 16) <= self.target:
                 return nonce
             i += 1
             # i += random.randint(1, 10)
@@ -236,11 +236,11 @@ class Block:
 
         return total
 
-    def adjust_diff(self):
-        if (DIFFICULTY_ADUJST is False) or (not (self.sc_self and self.sc_self.bm.chain)) or (
+    def adjust_target(self):
+        if (TARGET_ADUJST is False) or (not (self.sc_self and self.sc_self.bm.chain)) or (
                 len(self.sc_self.bm.chain) < SAVE_BORDER_HALF):
-            default_diff = ('0' * DIFFICULTY) + ((64 - DIFFICULTY) * "f")
-            return int(default_diff, 16)
+            default_target = ('0' * TARGET) + ((64 - TARGET) * "f")
+            return int(default_target, 16)
         else:
             chain = list(self.sc_self.bm.chain)
             chain = chain[-1 * SAVE_BORDER_HALF:]
@@ -250,7 +250,7 @@ class Block:
             total_probability = 0
             sha256_max = int("f" * 64, 16)
             for block in chain:
-                w_s = int(block["difficulty"], 16) / sha256_max
+                w_s = int(block["target"], 16) / sha256_max
                 total_probability += 1 / w_s
             w_t1 = (total_ts / 60) / (POW_TIME * total_probability)
             return int(w_t1 * sha256_max)
@@ -272,7 +272,7 @@ class GenesisBlock(Block):
             'transactions': self.transactions,
             'genesis_block': True,
             'timestamp': self.timestamp,
-            "difficulty": ('0' * DIFFICULTY) + ((64 - DIFFICULTY) * "f"),
+            "target": ('0' * TARGET) + ((64 - TARGET) * "f"),
         }
         if include_nonce:
             d['nonce'] = self.nonce

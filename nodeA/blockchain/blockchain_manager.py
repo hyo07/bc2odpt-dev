@@ -205,9 +205,8 @@ class BlockchainManager:
             print('invalid chain cannot be set...')
             return None, []
 
-    def is_valid_block(self, prev_block_hash, block, difficulty=DIFFICULTY):
+    def is_valid_block(self, prev_block_hash, block):
         # ブロック単体の正当性を検証する
-        # suffix = '0' * difficulty
         block_4_pow = copy.deepcopy(block)
         nonce = block_4_pow['nonce']
         del block_4_pow['nonce']
@@ -231,7 +230,7 @@ class BlockchainManager:
             # if digest.endswith(suffix):
             #     print('OK, this seems valid block')
             #     return True
-            if int(digest, 16) <= int(block_4_pow["difficulty"], 16):
+            if int(digest, 16) <= int(block_4_pow["target"], 16):
                 print('OK, this seems valid block')
                 return True
             else:
@@ -242,9 +241,8 @@ class BlockchainManager:
                     # print('suffix', suffix)
                 return False
 
-    def is_valid_block_booby(self, block, difficulty=DIFFICULTY):
+    def is_valid_block_booby(self, block):
         # ブロック単体の正当性を検証する
-        # suffix = '0' * difficulty
         block_4_pow = copy.deepcopy(block)
         nonce = block_4_pow['nonce']
         del block_4_pow['nonce']
@@ -270,7 +268,7 @@ class BlockchainManager:
             # if digest.endswith(suffix):
             #     print('OK, this seems valid block')
             #     return True
-            if int(digest, 16) <= int(block_4_pow["difficulty"], 16):
+            if int(digest, 16) <= int(block_4_pow["target"], 16):
                 print('OK, this seems valid block')
                 return True
             else:

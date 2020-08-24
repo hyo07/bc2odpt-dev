@@ -123,7 +123,7 @@ def is_valid_block(prev_block_hash, block):
         return False
     else:
         digest = binascii.hexlify(_get_double_sha256((message + nonce).encode('utf-8'))).decode('ascii')
-        if int(digest, 16) <= int(block["difficulty"], 16):
+        if int(digest, 16) <= int(block["target"], 16):
             block['nonce'] = nonce
             block['transactions'] = transactions
             block["addrs"] = addrs
