@@ -59,7 +59,7 @@ class ServerCore(object):
             latest_dbd_block = main_level.get_latest_block(LDB_P)
             self.prev_block_hash = self.bm.get_hash(latest_dbd_block)
             block_num = level_param.get_block_num(PARAM_P) + len(self.bm.chain)
-            new_block = self.bb.generate_new_block([], self.prev_block_hash, str(block_num), ADDRESS, {}, self)
+            new_block = self.bb.generate_new_block({}, self.prev_block_hash, str(block_num), ADDRESS, {}, self)
             self.bm.set_reconnect_block(new_block.to_dict())
             self.prev_block_hash = self.bm.get_hash(new_block.to_dict())
         else:

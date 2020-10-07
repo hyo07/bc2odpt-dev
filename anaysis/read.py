@@ -3,6 +3,7 @@ from glob import glob
 import json
 import binascii
 import hashlib
+import pprint
 
 
 # json形式で読み込み
@@ -149,6 +150,17 @@ def read_ones_db(p):
     clientC = 0
     clientD = 0
     clientE = 0
+    clientF = 0
+    clientG = 0
+    clientH = 0
+    clientI = 0
+    clientJ = 0
+    clientA2 = 0
+    clientB2 = 0
+    clientC2 = 0
+    clientD2 = 0
+    clientE2 = 0
+    clientC3 = 0
     for db_name in sorted(db_list):
         db = plyvel.DB(str(db_name), create_if_missing=False)
         for k, v in db:
@@ -170,10 +182,38 @@ def read_ones_db(p):
                         clientD += 1
                     if "clientE" in in_addr["addrs"]:
                         clientE += 1
+                    if "clientF" in in_addr["addrs"]:
+                        clientF += 1
+                    if "clientG" in in_addr["addrs"]:
+                        clientG += 1
+                    if "clientH" in in_addr["addrs"]:
+                        clientH += 1
+                    if "clientI" in in_addr["addrs"]:
+                        clientI += 1
+                    if "clientJ" in in_addr["addrs"]:
+                        clientJ += 1
+                    if "clientA2" in in_addr["addrs"]:
+                        clientA2 += 1
+                    if "clientB2" in in_addr["addrs"]:
+                        clientB2 += 1
+                    if "clientC2" in in_addr["addrs"]:
+                        clientC2 += 1
+                    if "clientD2" in in_addr["addrs"]:
+                        clientD2 += 1
+                    if "clientE2" in in_addr["addrs"]:
+                        clientE2 += 1
+                    if "clientC3" in in_addr["addrs"]:
+                        clientC3 += 1
         db.close()
     # print(re_s)
-    return {"total_tx": total_tx, "total_addr": total_addr,
-            "clientA": clientA, "clientB": clientB, "clientC": clientC, "clientD": clientD, "clientE": clientE}
+    re_dic = {
+        "total_tx": total_tx, "total_addr": total_addr,
+        "clientA": clientA, "clientB": clientB, "clientC": clientC, "clientD": clientD, "clientE": clientE,
+        "clientF": clientF, "clientG": clientG, "clientH": clientH, "clientI": clientI, "clientJ": clientJ,
+        "clientA2": clientA2, "clientB2": clientB2, "clientC2": clientC2, "clientD2": clientD2, "clientE2": clientE2,
+        "clientC3": clientC3,
+    }
+    return re_dic
 
 
 def read_json_file(path="test.json"):
@@ -188,6 +228,28 @@ def read_json_file(path="test.json"):
     return block_chain
 
 
+def read_logs(path, limit: int):
+    import csv
+    re_list = []
+    log_pattern = ["*generate*", "*longest*", "*majority*"]
+    for log_type in log_pattern:
+        logs = glob(path + log_type)
+        re_dic = {}
+        for log in sorted(logs):
+            file_name = log.split("/")[-1]
+            with open(log, "r") as f:
+                reader = csv.reader(f)
+                count = 0
+                for row in reader:
+                    if int(row[1]) <= limit:
+                        count += 1
+                    else:
+                        break
+                re_dic[file_name] = count
+        re_list.append(re_dic)
+    return re_list
+
+
 if __name__ == "__main__":
     pass
 
@@ -200,17 +262,17 @@ if __name__ == "__main__":
     P4 = root_P + "/nodeX_4/db/ldb/"
     P5 = root_P + "/nodeX_5/db/ldb/"
 
-    read_bc = json_db(P1)
+    # read_bc = json_db(P1)
     # file読み
-    # file_name = "20200817.json"
-    # read_bc = read_json_file(file_name)
+    file_name = root_P + "/logs/20200929-1.json"
+    read_bc = read_json_file(file_name)
 
     # print(read_bc)
     print(len(read_bc))
-    #
-    # with open(root_P + "/logs/20200818.json", "w") as f:
+
+    # with open(root_P + "/logs/20200924-2.json", "w") as f:
     #     f.write(json.dumps(read_bc))
-    #
+
     # print(len(read_bc))
     print(is_valid_chain(read_bc))
     # # print(valid_all(P1))
@@ -218,20 +280,19 @@ if __name__ == "__main__":
     print("---------------------------------------------")
     #
     # diffチェック
-    print(comparison_ldbs(P1, P2, 20))
-    print(comparison_ldbs(P1, P3, 20))
-    print(comparison_ldbs(P1, P4, 20))
-    print(comparison_ldbs(P1, P5, 20))
+    # print(comparison_ldbs(P1, P2, 20))
+    # print(comparison_ldbs(P1, P3, 20))
+    # print(comparison_ldbs(P1, P4, 20))
+    # print(comparison_ldbs(P1, P5, 20))
 
-    # gene_time_list = []
-    # ts = 0
-    # for block in read_bc:
-    #     if ts != 0:
-    #         sa = block["timestamp"] - ts
-    #         print(sa)
-    #         gene_time_list.append(sa)
-    #     ts = block["timestamp"]
-    # print("平均:", sum(gene_time_list) / len(gene_time_list))
+    gene_time_list = []
+    ts = 0
+    for block in read_bc:
+        if ts != 0:
+            sa = block["timestamp"] - ts
+            gene_time_list.append(sa)
+        ts = block["timestamp"]
+    print("平均:", sum(gene_time_list) / len(gene_time_list))
 
     # clientを調べる
     print(read_ones_db(P1))
@@ -241,3 +302,12 @@ if __name__ == "__main__":
     #         print(float(int(block["target"], 16)))
     #     except KeyError:
     #         print(float(int(block["difficulty"], 16)))
+
+    pprint.pprint(read_logs(root_P + "/logs/", len(read_bc)))
+
+    # exp1 = read_json_file(root_P + "/logs/20200929-1.json")
+    # exp2 = read_json_file(root_P + "/logs/20200929-2.json")
+    # exp3 = read_json_file(root_P + "/logs/20200929-3.json")
+    #
+    # print(exp1 == exp2)
+    # print(exp1 == exp3)

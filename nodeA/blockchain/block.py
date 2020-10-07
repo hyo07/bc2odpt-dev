@@ -128,22 +128,22 @@ class Block:
         while True:
             if self.sc_self and self.sc_self.bm.chain:
                 if len(self.sc_self.bm.chain) > 1:
-                    # if (int(self.b_num) < int(self.sc_self.bm.chain[-1]["block_number"])) or (
-                    #         (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
-                    #         self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"])) or (
-                    #         (self.previous_block is not self.sc_self.prev_block_hash) and (
-                    #         (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1)):
-                    #     self.lose_flag = True
-                    #     return 0
+                    if (int(self.b_num) < int(self.sc_self.bm.chain[-1]["block_number"])) or (
+                            (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
+                            self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"])) or (
+                            (self.previous_block is not self.sc_self.prev_block_hash) and (
+                            (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1)):
+                        self.lose_flag = True
+                        return 0
 
-                    if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
-                        return 0
-                    elif (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
-                            self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"]):
-                        return 0
-                    elif (self.previous_block is not self.sc_self.prev_block_hash) and (
-                            (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1):
-                        return 0
+                    # if int(self.b_num) <= int(self.sc_self.bm.chain[-1]["block_number"]):
+                    #     return 0
+                    # elif (int(self.b_num) == int(self.sc_self.bm.chain[-1]["block_number"])) and (
+                    #         self.total_clients <= self.sc_self.bm.chain[-1]["total_majority"]):
+                    #     return 0
+                    # elif (self.previous_block is not self.sc_self.prev_block_hash) and (
+                    #         (int(self.b_num) - int(self.sc_self.bm.chain[-1]["block_number"])) == 1):
+                    #     return 0
 
             if i % 200000 == 0:
                 print("Mining!")
