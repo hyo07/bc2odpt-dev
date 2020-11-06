@@ -264,7 +264,7 @@ if __name__ == "__main__":
 
     # read_bc = json_db(P1)
     # file読み
-    file_name = root_P + "/logs/20200929-1.json"
+    file_name = root_P + "/logs/2020****.json"
     read_bc = read_json_file(file_name)
 
     # print(read_bc)
@@ -273,7 +273,6 @@ if __name__ == "__main__":
     # with open(root_P + "/logs/20200924-2.json", "w") as f:
     #     f.write(json.dumps(read_bc))
 
-    # print(len(read_bc))
     print(is_valid_chain(read_bc))
     # # print(valid_all(P1))
     #
@@ -311,3 +310,22 @@ if __name__ == "__main__":
     #
     # print(exp1 == exp2)
     # print(exp1 == exp3)
+
+    print()
+    count = 0
+    prev_ts = 0
+    for b in read_bc:
+        if b["block_number"] == "0":
+            prev_ts = b["timestamp"]
+            continue
+        now_ts = b["timestamp"]
+        this_block_time = now_ts - prev_ts
+        prev_ts = b["timestamp"]
+        txs = json.loads(b["transactions"])
+        for tx in txs:
+            if tx["attack"]:
+                # print(f'block_bumber: {int(b["block_number"])}')
+                # print(f'生成時間: {this_block_time}')
+                print(int(b["block_number"]))
+                print(this_block_time)
+                break
